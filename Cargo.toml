@@ -1,0 +1,32 @@
+[package]
+name = "mobile-linux-shell"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = [
+    "console", "Window", "Document", "Element", "HtmlElement",
+    "Storage", "IdbFactory", "IdbDatabase", "IdbObjectStore",
+    "IdbTransaction", "IdbRequest", "IdbOpenDbRequest",
+    "Request", "Response", "Headers", "ReadableStream",
+    "WebSocket", "MessageEvent", "CloseEvent", "ErrorEvent",
+    "File", "Blob", "Url", "Performance"
+] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde-wasm-bindgen = "0.6"
+futures = "0.3"
+wasm-bindgen-futures = "0.4"
+base64 = "0.22"
+lazy_static = "1.4"
+once_cell = "1.19"
+thiserror = "1"
+
+[profile.release]
+opt-level = "s"
+lto = true
