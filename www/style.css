@@ -1,0 +1,63 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #000;
+  color: #ccc;
+  font-family: "DejaVu Sans Mono", "Cascadia Code", monospace;
+  touch-action: manipulation;
+}
+
+#terminal-container {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  bottom: 96px; /* dual-row extra keys */
+  padding: 4px;
+}
+
+#terminal {
+  width: 100%;
+  height: 100%;
+}
+
+#extra-keys {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 96px;
+  background: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #333;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ek-row {
+  flex: 1;
+  display: flex;
+}
+.ek-key {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #333;
+  background: #2a2a2a;
+  color: #eee;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.ek-key:active, .ek-key.active {
+  background: #0a84ff;
+  color: #fff;
+}
+.ek-key.special { background: #3a3a3a; }
+
+/* Android keyboard / visualViewport handling */
+@media (max-height: 500px) {
+  #terminal-container { bottom: 72px; }
+  #extra-keys { height: 72px; }
+}
