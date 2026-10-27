@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Building mobile-linux-shell.wasm …"
+echo "→ Building WASM..."
 wasm-pack build --target web --out-dir pkg --release
 
-# Optional: copy to a static server directory
+echo "→ Preparing dist/..."
+rm -rf dist
 mkdir -p dist
 cp -r pkg/* dist/
-cp www/* dist/
+cp -r www/* dist/
 
-echo "Done. Serve the 'dist' directory (or 'pkg' + 'www') over HTTPS."
-echo "  npx serve dist   # or any static file server"
+echo ""
+echo "✓ Build successful!"
+echo "  Serve with:  npx serve dist"
+echo "  or:          python3 -m http.server 8080 --directory dist"
