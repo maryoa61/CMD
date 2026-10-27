@@ -1,7 +1,11 @@
 import init, {
-  init_shell, handle_input, get_prompt, get_cwd,
-  upload_file, download_file, list_extra_keys
-} from '../pkg/mobile_linux_shell.js';
+  init_shell,
+  handle_input,
+  get_prompt,
+  get_cwd,
+  upload_file,
+  download_file
+} from './mobile_linux_shell.js';
 
 const term = new Terminal({
   cursorBlink: true,
@@ -27,14 +31,19 @@ let ctrlPressed = false;
 let altPressed = false;
 
 async function boot() {
-  await init();
-  await init_shell();
-  term.writeln('\x1b[1;32mMobile Linux Shell\x1b[0m – WASM core ready');
-  term.writeln('Type \x1b[1mhelp\x1b[0m for built-in commands.\r\n');
-  prompt();
-  buildExtraKeys();
-  setupViewport();
-  setupFileBridge();
+  try {
+    await init();
+    await init_shell();
+    term.writeln('\x1b[1;32mMobile Linux Shell\x1b[0m – WASM core ready');
+    term.writeln('Type \x1b[1mhelp\x1b[0m for built-in commands.\r\n');
+    prompt();
+    buildExtraKeys();
+    setupViewport();
+    setupFileBridge();
+  } catch (e) {
+    term.writeln(`\x1b[31mBoot error: ${e}\x1b[0m`);
+    console.error(e);
+  }
 }
 
 function prompt() {
@@ -44,15 +53,15 @@ function prompt() {
 }
 
 term.onData(data => {
-  if (data === '\r') {               // Enter
+  if (data === '\r') {                 // Enter
     term.write('\r\n');
     runCommand(currentLine);
-  } else if (data === '\x7f') {      // Backspace
+  } else if (data === '\x7f') {        // Backspace
     if (currentLine.length > 0) {
       currentLine = currentLine.slice(0, -1);
       term.write('\b \b');
     }
-  } else if (data === '\x03') {      // Ctrl+C
+  } else if (data === '\x03') {        // Ctrl+C
     term.write('^C\r\n');
     prompt();
   } else if (data >= String.fromCharCode(0x20)) {
@@ -64,7 +73,9 @@ term.onData(data => {
 async function runCommand(line) {
   try {
     const out = await handle_input(line);
-    if (out) term.write(out.replace(/\n/g, '\r\n'));
+    if (out) {
+      term.write(out.replace(/\n/g, '\r\n'));
+    }
   } catch (e) {
     term.writeln(`\x1b[31mError: ${e}\x1b[0m`);
   }
@@ -74,10 +85,12 @@ async function runCommand(line) {
 // ---------- Termux-style Extra Keys ----------
 function buildExtraKeys() {
   const container = document.getElementById('extra-keys');
+  container.innerHTML = ''; // clear previous
+
   const keys = [
-    // row 1
+    // ردیف اول
     ['ESC', 'TAB', 'CTRL', 'ALT', '↑', '↓', '←', '→'],
-    // row 2
+    // ردیف دوم
     ['/', '-', 'HOME', 'END', 'PGUP', 'PGDN', 'Ctrl+C', 'Paste']
   ];
 
@@ -86,10 +99,19 @@ function buildExtraKeys() {
     r.className = 'ek-row';
     row.forEach(label => {
       const k = document.createElement('div');
-      k.className = 'ek-key' + (['CTRL','ALT','ESC','Ctrl+C'].includes(label) ? ' special' : '');
+      k.className = 'ek-key' + (['CTRL', 'ALT', 'ESC', 'Ctrl+C'].includes(label) ? ' special' : '');
       k.textContent = label;
-      k.addEventListener('touchstart', e => { e.preventDefault(); handleExtraKey(label, k); }, {passive:false});
-      k.addEventListener('mousedown', e => { e.preventDefault(); handleExtraKey(label, k); });
+
+      k.addEventListener('touchstart', e => {
+        e.preventDefault();
+        handleExtraKey(label, k);
+      }, { passive: false });
+
+      k.addEventListener('mousedown', e => {
+        e.preventDefault();
+        handleExtraKey(label, k);
+      });
+
       r.appendChild(k);
     });
     container.appendChild(r);
@@ -101,20 +123,50 @@ function handleExtraKey(label, el) {
   setTimeout(() => el.classList.remove('active'), 120);
 
   switch (label) {
-    case 'ESC':   term.focus(); term.textarea.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true})); break;
-    case 'TAB':   currentLine += '\t'; term.write('    '); break;
-    case 'CTRL':  ctrlPressed = !ctrlPressed; el.classList.toggle('active', ctrlPressed); break;
-    case 'ALT':   altPressed  = !altPressed;  el.classList.toggle('active', altPressed);  break;
-    case '↑':     /* history would go here */ break;
-    case '↓':     break;
-    case '←':     if (currentLine.length) { currentLine = currentLine.slice(0,-1); term.write('\b \b'); } break;
-    case '→':     break;
-    case '/':     currentLine += '/'; term.write('/'); break;
-    case '-':     currentLine += '-'; term.write('-'); break;
-    case 'HOME':  break;
-    case 'END':   break;
-    case 'PGUP':  term.scrollPages(-1); break;
-    case 'PGDN':  term.scrollPages(1);  break;
+    case 'ESC':
+      // فعلاً کاری نمی‌کنیم
+      break;
+    case 'TAB':
+      currentLine += '\t';
+      term.write('    ');
+      break;
+    case 'CTRL':
+      ctrlPressed = !ctrlPressed;
+      el.classList.toggle('active', ctrlPressed);
+      break;
+    case 'ALT':
+      altPressed = !altPressed;
+      el.classList.toggle('active', altPressed);
+      break;
+    case '↑':
+    case '↓':
+      // تاریخچه دستورات هنوز پیاده‌سازی نشده
+      break;
+    case '←':
+      if (currentLine.length > 0) {
+        currentLine = currentLine.slice(0, -1);
+        term.write('\b \b');
+      }
+      break;
+    case '→':
+      break;
+    case '/':
+      currentLine += '/';
+      term.write('/');
+      break;
+    case '-':
+      currentLine += '-';
+      term.write('-');
+      break;
+    case 'HOME':
+    case 'END':
+      break;
+    case 'PGUP':
+      term.scrollPages(-1);
+      break;
+    case 'PGDN':
+      term.scrollPages(1);
+      break;
     case 'Ctrl+C':
       term.write('^C\r\n');
       prompt();
@@ -128,30 +180,37 @@ function handleExtraKey(label, el) {
   }
 }
 
-// ---------- visualViewport (Android keyboard) ----------
+// ---------- visualViewport (کیبورد اندروید) ----------
 function setupViewport() {
   const vv = window.visualViewport;
   if (!vv) return;
+
   const update = () => {
     document.documentElement.style.height = vv.height + 'px';
     fitAddon.fit();
   };
+
   vv.addEventListener('resize', update);
   vv.addEventListener('scroll', update);
   update();
 }
 
-// ---------- File upload / download bridge ----------
+// ---------- آپلود / دانلود فایل ----------
 function setupFileBridge() {
   const uploadInput = document.getElementById('file-upload');
-  // Expose a simple command-line helper via a global for now
+
   window.__upload = () => uploadInput.click();
+
   uploadInput.addEventListener('change', async () => {
     for (const file of uploadInput.files) {
       const buf = new Uint8Array(await file.arrayBuffer());
       const path = `/root/${file.name}`;
-      await upload_file(path, buf);
-      term.writeln(`\r\nuploaded → ${path}`);
+      try {
+        await upload_file(path, buf);
+        term.writeln(`\r\nuploaded → ${path}`);
+      } catch (e) {
+        term.writeln(`\r\nupload error: ${e}`);
+      }
     }
     prompt();
   });
@@ -172,9 +231,11 @@ function setupFileBridge() {
   };
 }
 
-// Resize observer for orientation changes
+// تغییر اندازه صفحه
 window.addEventListener('resize', () => fitAddon.fit());
 
+// شروع
 boot().catch(e => {
-  document.body.innerHTML = `<pre style="color:red;padding:1rem">Failed to start WASM: ${e}</pre>`;
+  document.body.innerHTML = `<pre style="color:red;padding:1rem">Failed to start WASM:\n${e}</pre>`;
+  console.error(e);
 });
